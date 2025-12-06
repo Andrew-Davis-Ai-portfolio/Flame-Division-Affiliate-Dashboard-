@@ -1,6 +1,79 @@
 // Flame Division Partner Dashboard v0
 // TTS instructions + report payload generator + copy-to-clipboard.
 
+// Simple "neural network" background for dashboard
+(function () {
+  const canvas = document.getElementById("bg-neural");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  let width, height, points;
+
+  function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    createPoints();
+  }
+
+  function createPoints() {
+    const count = Math.floor((width * height) / 35000); // density
+    points = [];
+    for (let i = 0; i < count; i++) {
+      points.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+      });
+    }
+  }
+
+  function step() {
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = "#060712";
+    ctx.fillRect(0, 0, width, height);
+
+    // draw points
+    ctx.fillStyle = "rgba(212, 175, 55, 0.8)"; // ember gold
+    const maxDist = 140;
+
+    for (let i = 0; i < points.length; i++) {
+      const p = points[i];
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < 0 || p.x > width) p.vx *= -1;
+      if (p.y < 0 || p.y > height) p.vy *= -1;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // lines to nearby points
+      for (let j = i + 1; j < points.length; j++) {
+        const q = points[j];
+        const dx = p.x - q.x;
+        const dy = p.y - q.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < maxDist) {
+          const alpha = 1 - dist / maxDist;
+          ctx.strokeStyle = "rgba(212, 175, 55," + alpha * 0.4 + ")";
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(q.x, q.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  window.addEventListener("resize", resize);
+  resize();
+  requestAnimationFrame(step);
+})();
+
 (function () {
   const tts = {
     synth: "speechSynthesis" in window ? window.speechSynthesis : null,
