@@ -127,3 +127,178 @@ textarea::placeholder {
   margin: 0;
   opacity: 0.85;
 }
+
+/* Divider line in side panel */
+.divider {
+  border: 0;
+  border-top: 1px solid rgba(212, 175, 55, 0.18);
+  margin: 16px 0 10px;
+}
+
+/* Tiny text helper */
+.tiny {
+  font-size: 0.7rem;
+}
+
+/* Ledger search row */
+.search-row {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.search-row input[type="text"] {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(5, 6, 14, 0.9);
+  color: #f3f3f3;
+}
+
+/* Ledger results panel */
+.ledger-results {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+/* Individual result card (hologram HUD vibe) */
+.ledger-entry-card {
+  position: relative;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: radial-gradient(circle at top left,
+      rgba(212, 175, 55, 0.22),
+      rgba(5, 6, 14, 0.96));
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.18);
+  overflow: hidden;
+}
+
+.ledger-entry-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(
+    to bottom,
+    rgba(212, 175, 55, 0.1),
+    rgba(212, 175, 55, 0.9),
+    rgba(212, 175, 55, 0.1)
+  );
+  opacity: 0.7;
+}
+
+.ledger-entry-card:hover {
+  box-shadow:
+    0 0 14px rgba(212, 175, 55, 0.35),
+    0 0 40px rgba(212, 175, 55, 0.12);
+  transform: translateY(-1px);
+}
+
+.lec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.lec-product {
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.lec-score {
+  opacity: 0.9;
+}
+
+.lec-meta {
+  opacity: 0.9;
+  margin-bottom: 2px;
+}
+
+.lec-notes {
+  margin: 0;
+  opacity: 0.85;
+}
+
+/* HUD intel block */
+.hud-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 10px;
+}
+
+.hud-intel {
+  margin-top: 6px;
+}
+
+.hud-intel ul {
+  margin: 4px 0 0;
+}
+
+/* Performance panel + chart */
+.perf-panel {
+  margin-top: 20px;
+}
+
+.perf-chart {
+  margin-top: 10px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  min-height: 160px;
+}
+
+.perf-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.perf-bar {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(
+    to top,
+    rgba(212, 175, 55, 0.1),
+    rgba(212, 175, 55, 0.9)
+  );
+  box-shadow:
+    0 0 12px rgba(212, 175, 55, 0.3),
+    0 0 32px rgba(212, 175, 55, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.perf-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top,
+    rgba(255, 255, 255, 0.18),
+    transparent 55%);
+  mix-blend-mode: screen;
+}
+
+.perf-bar-value {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.7rem;
+  opacity: 0.9;
+}
+
+.perf-bar-label {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  text-align: center;
+}
