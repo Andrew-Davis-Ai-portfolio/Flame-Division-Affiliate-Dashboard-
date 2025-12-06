@@ -1,5 +1,5 @@
 // Flame Division Partner Dashboard v0
-// Neural background + TTS + local "vector" ledger brain + payload generator.
+// Neural background + TTS + local "vector" ledger brain + HUD + performance chart.
 
 // ================================
 // 1. NEURAL / "UNREAL" BACKGROUND
@@ -190,6 +190,17 @@
       this.save();
     },
 
+    replaceAll(newEntries) {
+      if (!Array.isArray(newEntries)) return;
+      this.entries = newEntries.map((e) => ({
+        ...e,
+      }));
+      this.entries.sort((a, b) =>
+        a.timestamp < b.timestamp ? 1 : -1
+      );
+      this.save();
+    },
+
     // "vector-style" matcher = token overlap score
     search(query) {
       const trimmed = (query || "").trim();
@@ -301,6 +312,162 @@
     });
   }
 
+  // ---- INTELLIGENCE + CHART HELPERS ----
+
+  function computeIntel(entries) {
+    const total = entries.length;
+    if (!total) {
+      return { totalReports: 0 };
+    }
+
+    const byProduct = {};
+    let totalAmount = 0;
+    let latest = null;
+
+    for (const e of entries) {
+      const prodKey = (e.product || "Unspecified").trim().toLowerCase();
+      byProduct[prodKey] = (byProduct[prodKey] || 0) + 1;
+
+      if (e.amount) {
+        const num = parseFloat(String(e.amount).replace(/[^0-9.]/g, ""));
+        if (!Number.isNaN(num)) totalAmount += num;
+      }
+
+      if (e.timestamp) {
+        const d = new Date(e.timestamp);
+        if (!latest || d > latest) latest = d;
+      }
+    }
+
+    const productEntries = Object.entries(byProduct).sort(
+      (a, b) => b[1] - a[1]
+    );
+    const topProduct = productEntries[0]
+      ? { name: productEntries[0][0], count: productEntries[0][1] }
+      : null;
+
+    return {
+      totalReports: total,
+      approxTotalAmount: totalAmount,
+      topProduct,
+      latest: latest ? latest.toISOString().slice(0, 10) : null,
+    };
+  }
+
+  function renderIntel(intel, box) {
+    if (!box) return;
+    box.innerHTML = "";
+
+    if (!intel || !intel.totalReports) {
+      const p = document.createElement("p");
+      p.className = "tiny muted";
+      p.textContent =
+        "No activity yet. Once you log reports, your local summary will appear here.";
+      box.appendChild(p);
+      return;
+    }
+
+    const ul = document.createElement("ul");
+    ul.className = "check-list tiny";
+
+    const liTotal = document.createElement("li");
+    liTotal.textContent =
+      "Reports logged (local): " + intel.totalReports;
+    ul.appendChild(liTotal);
+
+    if (intel.approxTotalAmount > 0) {
+      const liAmt = document.createElement("li");
+      liAmt.textContent =
+        "Approx. total value (self-reported): $" +
+        Math.round(intel.approxTotalAmount);
+      ul.appendChild(liAmt);
+    }
+
+    if (intel.topProduct) {
+      const liProd = document.createElement("li");
+      liProd.textContent =
+        "Most reported product: " +
+        intel.topProduct.name +
+        " (" +
+        intel.topProduct.count +
+        ")";
+      ul.appendChild(liProd);
+    }
+
+    if (intel.latest) {
+      const liLast = document.createElement("li");
+      liLast.textContent = "Most recent report: " + intel.latest;
+      ul.appendChild(liLast);
+    }
+
+    box.appendChild(ul);
+  }
+
+  function computePerfData(entries) {
+    if (!entries.length) return [];
+
+    const counts = {};
+    for (const e of entries) {
+      const label = (e.product || "Unspecified").trim();
+      counts[label] = (counts[label] || 0) + 1;
+    }
+
+    const arr = Object.entries(counts).map(([label, count]) => ({
+      label,
+      count,
+    }));
+
+    arr.sort((a, b) => b.count - a.count);
+    return arr.slice(0, 6);
+  }
+
+  function renderPerfChart(data, box) {
+    if (!box) return;
+    box.innerHTML = "";
+
+    if (!data || !data.length) {
+      const p = document.createElement("p");
+      p.className = "tiny muted";
+      p.textContent =
+        "No performance data yet. Once you log reports, product activity will show here.";
+      box.appendChild(p);
+      return;
+    }
+
+    const maxCount = data.reduce(
+      (m, item) => Math.max(m, item.count),
+      1
+    );
+
+    data.forEach((item) => {
+      const wrap = document.createElement("div");
+      wrap.className = "perf-bar-wrap";
+
+      const bar = document.createElement("div");
+      bar.className = "perf-bar";
+
+      const minHeight = 30;
+      const maxHeight = 130;
+      const h =
+        minHeight +
+        (item.count / maxCount) * (maxHeight - minHeight);
+      bar.style.height = h + "px";
+
+      const val = document.createElement("div");
+      val.className = "perf-bar-value tiny";
+      val.textContent = item.count;
+      bar.appendChild(val);
+
+      const label = document.createElement("div");
+      label.className = "perf-bar-label";
+      label.textContent = item.label;
+
+      wrap.appendChild(bar);
+      wrap.appendChild(label);
+      box.appendChild(wrap);
+    });
+  }
+
   // ---- DOM WIRING ----
   document.addEventListener("DOMContentLoaded", () => {
     const btnTts = document.getElementById("btn-tts-dash");
@@ -316,14 +483,35 @@
     const searchBtn = document.getElementById("ledger-search-btn");
     const resultsBox = document.getElementById("ledger-search-results");
 
+    const exportBtn = document.getElementById("ledger-export-btn");
+    const importBtn = document.getElementById("ledger-import-btn");
+    const importFile = document.getElementById("ledger-import-file");
+
+    const intelBox = document.getElementById("ledger-intel");
+    const perfChartBox = document.getElementById("perf-chart");
+
     // Load local ledger on startup
     ledger.load();
-    if (resultsBox) {
-      renderLedgerResults(
-        ledger.entries.map((e) => ({ entry: e, score: null })),
-        resultsBox
-      );
+
+    function refreshAllViews() {
+      if (resultsBox) {
+        renderLedgerResults(
+          ledger.entries.map((e) => ({ entry: e, score: null })),
+          resultsBox
+        );
+      }
+      if (intelBox) {
+        renderIntel(computeIntel(ledger.entries), intelBox);
+      }
+      if (perfChartBox) {
+        renderPerfChart(
+          computePerfData(ledger.entries),
+          perfChartBox
+        );
+      }
     }
+
+    refreshAllViews();
 
     // Prefill handle from query or localStorage
     (function prefillHandle() {
@@ -372,7 +560,7 @@
           "We verify each report against Stripe and internal records, and pay out on cleared, verified enrollments only. " +
           "Fill in your handle, the buyer, what they purchased, and when. " +
           "Add a short description or proof link, generate the report payload, and send it to the Flame Division review channel. " +
-          "Your reports are also stored locally in this browser so you can search your ledger over time.";
+          "Your reports are also stored locally in this browser so you can search your ledger, export backups, and view performance snapshots.";
         speak(script);
       });
     }
@@ -456,12 +644,7 @@
           payload: payloadText,
         });
 
-        if (resultsBox) {
-          renderLedgerResults(
-            ledger.entries.map((e) => ({ entry: e, score: null })),
-            resultsBox
-          );
-        }
+        refreshAllViews();
 
         msg.textContent =
           "Report payload generated below and saved to your local ledger. Copy it and send to your Flame Division contact or review inbox.";
@@ -506,6 +689,85 @@
           e.preventDefault();
           runSearch();
         }
+      });
+    }
+
+    // Export / Import
+    if (exportBtn) {
+      exportBtn.addEventListener("click", () => {
+        if (!ledger.entries.length) {
+          if (msg) {
+            msg.textContent =
+              "No ledger entries to export yet. Generate a report payload first.";
+            msg.className = "form-message error";
+          }
+          return;
+        }
+        try {
+          const dataStr = JSON.stringify(ledger.entries, null, 2);
+          const blob = new Blob([dataStr], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "fd-partner-ledger.json";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          if (msg) {
+            msg.textContent =
+              "Ledger exported as JSON. Store it somewhere safe.";
+            msg.className = "form-message success";
+          }
+        } catch (e) {
+          console.warn("Export error:", e);
+          if (msg) {
+            msg.textContent =
+              "Unable to export ledger JSON in this browser.";
+            msg.className = "form-message error";
+          }
+        }
+      });
+    }
+
+    if (importBtn && importFile) {
+      importBtn.addEventListener("click", () => {
+        importFile.click();
+      });
+
+      importFile.addEventListener("change", () => {
+        const file = importFile.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const text = e.target.result;
+            const data = JSON.parse(text);
+            if (!Array.isArray(data)) {
+              throw new Error("JSON must be an array");
+            }
+            ledger.replaceAll(data);
+            refreshAllViews();
+            if (msg) {
+              msg.textContent =
+                "Ledger JSON imported successfully into this browser.";
+              msg.className = "form-message success";
+            }
+          } catch (err) {
+            console.warn("Import error:", err);
+            if (msg) {
+              msg.textContent =
+                "Import failed. Ensure this is a valid ledger JSON file exported from this dashboard.";
+              msg.className = "form-message error";
+            }
+          } finally {
+            importFile.value = "";
+          }
+        };
+        reader.readAsText(file);
       });
     }
   });
