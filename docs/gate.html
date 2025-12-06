@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Flame Division Access Gate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Gate-specific tweaks on top of main style.css */
+
+    .gate-wrapper {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .gate-main {
+      background: var(--bg-soft, #17192a);
+      border-radius: var(--radius-lg, 18px);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      box-shadow: var(--shadow-soft, 0 18px 45px rgba(0,0,0,0.55));
+      padding: 18px 16px 18px;
+    }
+
+    .gate-main h2 {
+      margin: 0 0 8px;
+      font-size: 1.3rem;
+    }
+
+    .gate-main p {
+      margin: 0 0 10px;
+      font-size: 0.9rem;
+    }
+
+    .gate-form {
+      margin-top: 10px;
+    }
+
+    .gate-form .form-field {
+      margin-bottom: 12px;
+    }
+
+    .gate-form .form-field input {
+      width: 100%;
+    }
+
+    .gate-side {
+      background: var(--bg-elevated, #111321);
+      border-radius: var(--radius-lg, 18px);
+      border: 1px solid var(--border-subtle, #252840);
+      padding: 16px 14px 14px;
+      font-size: 0.86rem;
+    }
+
+    .gate-side h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .gate-side p {
+      margin: 0 0 8px;
+    }
+
+    .gate-side code {
+      font-size: 0.78rem;
+    }
+
+    @media (max-width: 720px) {
+      .gate-wrapper {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- HEADER -->
+    <header class="fd-header">
+      <div class="fd-brand">
+        <div class="fd-logo">FD</div>
+        <div class="fd-brand-text">
+          <h1>Flame Division Access Gate</h1>
+          <p>Partner-only surfaces · Guarded lane · No public wandering.</p>
+        </div>
+      </div>
+
+      <button id="btn-tts-gate" class="ghost-btn">
+        🔊 Hear access instructions
+      </button>
+    </header>
+
+    <main>
+      <section class="gate-wrapper">
+        <!-- LEFT: ACCESS FORM -->
+        <section class="gate-main">
+          <h2>Enter Partner Access Code</h2>
+          <p class="muted">
+            This gate protects internal partner pages such as the affiliate dashboard
+            and private enrollment surfaces. Only approved partners should continue.
+          </p>
+
+          <form id="gate-form" class="gate-form" novalidate>
+            <div class="form-field">
+              <label for="access-code">Access code<span>*</span></label>
+              <input
+                id="access-code"
+                name="accessCode"
+                type="password"
+                autocomplete="off"
+                placeholder="Enter your partner access code"
+                required
+              />
+              <p class="field-note small">
+                Code is issued directly by Flame Division. Do not share it publicly or post it online.
+              </p>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="primary-btn">
+                Unlock and continue
+              </button>
+            </div>
+
+            <p id="gate-message" class="form-message" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <!-- RIGHT: EXPLANATION / POLICY -->
+        <aside class="gate-side panel">
+          <h3>Why this gate exists</h3>
+          <p>
+            Partner pages operate under a different standard than public marketing pages.
+            They reference payout logic, internal processes, and partner-only tooling.
+          </p>
+          <ul class="check-list">
+            <li>Protects internal language from being taken out of context.</li>
+            <li>Prevents random traffic from misreading partner structures.</li>
+            <li>Keeps affiliate and payout conversations in a controlled lane.</li>
+          </ul>
+
+          <h3>How access works</h3>
+          <p class="small">
+            Once your code is accepted, this browser session stores a short-lived access token in
+            <code>sessionStorage</code>. Any gated page checks for that token before loading.
+          </p>
+          <p class="small muted">
+            Closing the browser or clearing site data will reset access and send you back to this gate.
+          </p>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="fd-footer">
+      <p>Flame Division Academy · Access Gate.</p>
+      <p class="muted small">If you reached this page by mistake, simply close the tab.</p>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const ACCESS_TOKEN = "FLAME_FDA_V1";      // must match index/dashboard
+      const STORAGE_KEY = "flame_fda_access";   // same key those pages read
+      const HUMAN_PASSCODE = "FD-PARTNER-ACCESS"; 
+      // 👆 change this to whatever phrase you actually give partners
+
+      const tts = {
+        synth: "speechSynthesis" in window ? window.speechSynthesis : null,
+        supported:
+          "speechSynthesis" in window &&
+          typeof window.SpeechSynthesisUtterance !== "undefined",
+        current: null,
+      };
+
+      function stopSpeech() {
+        if (tts.synth && tts.synth.speaking) {
+          tts.synth.cancel();
+          tts.current = null;
+        }
+      }
+
+      function speak(text) {
+        if (!tts.supported || !text) return;
+        stopSpeech();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 1;
+        u.pitch = 1;
+        u.onend = () => (tts.current = null);
+        tts.current = u;
+        tts.synth.speak(u);
+      }
+
+      if (tts.synth) {
+        try {
+          tts.synth.getVoices();
+          window.speechSynthesis.onvoiceschanged = () => {
+            tts.synth.getVoices();
+          };
+        } catch (e) {
+          console.warn("TTS preload issue:", e);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("gate-form");
+        const input = document.getElementById("access-code");
+        const msg = document.getElementById("gate-message");
+        const btnTts = document.getElementById("btn-tts-gate");
+
+        // If already unlocked, bounce straight to target
+        let current;
+        try {
+          current = sessionStorage.getItem(STORAGE_KEY);
+        } catch (err) {
+          current = null;
+        }
+        if (current === ACCESS_TOKEN) {
+          redirectToTarget();
+          return;
+        }
+
+        if (btnTts) {
+          btnTts.addEventListener("click", function () {
+            if (!tts.supported) {
+              alert(
+                "Text-to-speech is not available in this browser. Try Chrome, Edge, or Safari."
+              );
+              return;
+            }
+            const script =
+              "This is the Flame Division access gate. " +
+              "If you are an approved partner, enter the access code we sent you. " +
+              "Once accepted, your session is unlocked and you will be redirected to your intended page. " +
+              "If you are not a partner, you can safely close this tab.";
+            speak(script);
+          });
+        }
+
+        if (form) {
+          form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            msg.textContent = "";
+            msg.className = "form-message";
+
+            const code = (input.value || "").trim();
+
+            if (!code) {
+              msg.textContent = "Enter the partner access code to continue.";
+              msg.classList.add("error");
+              return;
+            }
+
+            if (code !== HUMAN_PASSCODE) {
+              msg.textContent = "Access code not recognized. Check with Flame Division if you believe this is an error.";
+              msg.classList.add("error");
+              return;
+            }
+
+            // Store internal token for this session
+            try {
+              sessionStorage.setItem(STORAGE_KEY, ACCESS_TOKEN);
+            } catch (err) {
+              console.warn("Unable to write access token:", err);
+            }
+
+            msg.textContent = "Access granted. Redirecting…";
+            msg.classList.add("success");
+
+            redirectToTarget();
+          });
+        }
+
+        function redirectToTarget() {
+          const params = new URLSearchParams(window.location.search);
+          const rawTarget = params.get("target") || "index.html";
+
+          let target;
+          try {
+            target = decodeURIComponent(rawTarget);
+          } catch (e) {
+            target = "index.html";
+          }
+
+          // Basic safety: ensure we only navigate to a local relative path
+          if (target.indexOf("http://") === 0 || target.indexOf("https://") === 0) {
+            target = "index.html";
+          }
+
+          window.location.href = target;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
