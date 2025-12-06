@@ -182,35 +182,58 @@
 
         <!-- RIGHT: INSTRUCTIONS / STATUS -->
         <aside class="panel dash-side">
-          <h3>How this dashboard works</h3>
-          <p>
-            This is a <strong>v0 manual ledger</strong>. It keeps authority centralized while giving
-            you a clear way to report your impact.
-          </p>
-          <ul class="check-list">
-            <li>You report sourced enrollments with honest details.</li>
-            <li>Flame Division cross-checks against Stripe and internal records.</li>
-            <li>Payouts are calculated on cleared, verified enrollments only.</li>
-          </ul>
+  <h3>How this dashboard works</h3>
+  <p>
+    This is a <strong>v0 manual ledger</strong>. It keeps authority centralized while giving
+    you a clear way to report your impact.
+  </p>
+  <ul class="check-list">
+    <li>You report sourced enrollments with honest details.</li>
+    <li>Flame Division cross-checks against Stripe and internal records.</li>
+    <li>Payouts are calculated on cleared, verified enrollments only.</li>
+  </ul>
 
-          <h3>Best practice for partners</h3>
-          <ul class="check-list">
-            <li>Submit reports weekly or monthly, not for every micro-action.</li>
-            <li>Include clear evidence or context so review is fast.</li>
-            <li>Keep your handle and payout email consistent.</li>
-          </ul>
+  <h3>Best practice for partners</h3>
+  <ul class="check-list">
+    <li>Submit reports weekly or monthly, not for every micro-action.</li>
+    <li>Include clear evidence or context so review is fast.</li>
+    <li>Keep your handle and payout email consistent.</li>
+  </ul>
 
-          <h3>Recommended subject line</h3>
-          <p class="small">
-            When you email a report payload, use a subject like:<br />
-            <code>[FD PARTNER] Enrollment report — &lt;your handle&gt;</code>
-          </p>
+  <h3>Recommended subject line</h3>
+  <p class="small">
+    When you email a report payload, use a subject like:<br />
+    <code>[FD PARTNER] Enrollment report — &lt;your handle&gt;</code>
+  </p>
 
-          <p class="muted small">
-            This dashboard will later plug into an automated backend or referral platform.
-            Your discipline now makes that upgrade painless.
-          </p>
-        </aside>
+  <p class="muted small">
+    This dashboard will later plug into an automated backend or referral platform.
+    Your discipline now makes that upgrade painless.
+  </p>
+
+  <hr class="divider" />
+
+  <h3>Ledger brain (local search)</h3>
+  <p class="small">
+    Every report you generate is stored in your browser only. Use this search box to query your
+    personal ledger using a lightweight vector-style matcher.
+  </p>
+
+  <div class="search-row">
+    <input
+      id="ledger-search-input"
+      type="text"
+      placeholder="Search: Tier 1 November high ticket"
+    />
+    <button id="ledger-search-btn" class="ghost-btn small">Search</button>
+  </div>
+
+  <p class="tiny muted">
+    Try mixing buyer names, products, and months. Results never leave your device.
+  </p>
+
+  <div id="ledger-search-results" class="ledger-results"></div>
+</aside>
       </section>
     </main>
 
