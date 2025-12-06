@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Flame Division Partner Dashboard — v0 Ledger</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Small dashboard-only tweaks */
+    .dash-header {
+      margin-top: 12px;
+      margin-bottom: 18px;
+    }
+    .dash-header h2 {
+      margin: 0 0 6px;
+      font-size: 1.3rem;
+    }
+    .dash-header p {
+      margin: 0;
+      font-size: 0.9rem;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .pill-row .badge {
+      font-size: 0.75rem;
+    }
+    .dash-layout {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+    .dash-side p {
+      font-size: 0.9rem;
+      margin: 0 0 10px;
+    }
+    .dash-side .small {
+      font-size: 0.78rem;
+    }
+    .dash-side code {
+      font-size: 0.78rem;
+    }
+    @media (max-width: 720px) {
+      .dash-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- HEADER (reusing FD header style) -->
+    <header class="fd-header">
+      <div class="fd-brand">
+        <div class="fd-logo">FD</div>
+        <div class="fd-brand-text">
+          <h1>Flame Division Partner Dashboard</h1>
+          <p>v0 Affiliate Ledger · Report → Verify → Pay.</p>
+        </div>
+      </div>
+
+      <button id="btn-tts-dash" class="ghost-btn">
+        🔊 Hear dashboard instructions
+      </button>
+    </header>
+
+    <main>
+      <section class="dash-header">
+        <h2>Report the sales you sourced.</h2>
+        <p class="muted">
+          This dashboard logs your claimed enrollments. Flame Division reviews each claim against
+          official records, then issues payouts after verification and refund windows.
+        </p>
+        <div class="pill-row">
+          <span class="badge">You: Report</span>
+          <span class="badge">Us: Verify</span>
+          <span class="badge">Then: Payout</span>
+        </div>
+      </section>
+
+      <section class="dash-layout">
+        <!-- LEFT: REPORT FORM -->
+        <section class="form-section">
+          <h2>Log a Sourced Enrollment</h2>
+          <p class="muted small">
+            Use this form whenever someone enrolls through your influence or referral link.
+            Be precise. Clean data speeds up verification and payouts.
+          </p>
+
+          <form id="report-form" novalidate>
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="partner-handle">Your partner handle<span>*</span></label>
+                <input id="partner-handle" name="partnerHandle" type="text"
+                  placeholder="example: flame-ally" required />
+                <p class="field-note small">
+                  Use the same handle approved in your partner application.
+                </p>
+              </div>
+
+              <div class="form-field">
+                <label for="partner-email">Your email<span>*</span></label>
+                <input id="partner-email" name="partnerEmail" type="email"
+                  placeholder="you@example.com" required />
+              </div>
+
+              <div class="form-field">
+                <label for="buyer-name">Buyer name / company<span>*</span></label>
+                <input id="buyer-name" name="buyerName" type="text"
+                  placeholder="Person or organization that enrolled" required />
+              </div>
+
+              <div class="form-field">
+                <label for="product">Product / tier purchased<span>*</span></label>
+                <input id="product" name="product" type="text"
+                  placeholder="Example: Tier 1 — Systems Track" required />
+              </div>
+
+              <div class="form-field">
+                <label for="purchase-date">Approx. purchase date<span>*</span></label>
+                <input id="purchase-date" name="purchaseDate" type="date" required />
+              </div>
+
+              <div class="form-field">
+                <label for="amount">Approx. amount paid (optional)</label>
+                <input id="amount" name="amount" type="text"
+                  placeholder="Example: 497 USD" />
+              </div>
+
+              <div class="form-field">
+                <label for="proof">Evidence / context (link or description)<span>*</span></label>
+                <textarea id="proof" name="proof" rows="3"
+                  placeholder="Example: Screenshot link, email thread summary, or short description."
+                  required></textarea>
+              </div>
+
+              <div class="form-field">
+                <label for="notes">Notes for review team (optional)</label>
+                <textarea id="notes" name="notes" rows="3"
+                  placeholder="Anything else we should know about this buyer or deal."></textarea>
+              </div>
+            </div>
+
+            <div class="form-footer">
+              <label class="checkbox">
+                <input id="confirm-true" type="checkbox" required />
+                <span>
+                  I confirm this report is accurate to the best of my knowledge and understand that
+                  Flame Division verifies each claim against official records before payout.
+                </span>
+              </label>
+
+              <div class="form-actions">
+                <button type="button" id="btn-copy-payload" class="ghost-btn small">
+                  📋 Copy report payload
+                </button>
+                <button type="submit" class="primary-btn">
+                  Generate report payload
+                </button>
+              </div>
+            </div>
+
+            <p id="report-message" class="form-message" aria-live="polite"></p>
+
+            <details class="copy-block">
+              <summary>View / copy this report payload</summary>
+              <p class="small muted">
+                Copy this block and send it to the Flame Division review channel
+                (email, DM, or your assigned contact) until a direct backend is connected.
+              </p>
+              <pre id="report-payload"></pre>
+            </details>
+          </form>
+        </section>
+
+        <!-- RIGHT: INSTRUCTIONS / STATUS -->
+        <aside class="panel dash-side">
+          <h3>How this dashboard works</h3>
+          <p>
+            This is a <strong>v0 manual ledger</strong>. It keeps authority centralized while giving
+            you a clear way to report your impact.
+          </p>
+          <ul class="check-list">
+            <li>You report sourced enrollments with honest details.</li>
+            <li>Flame Division cross-checks against Stripe and internal records.</li>
+            <li>Payouts are calculated on cleared, verified enrollments only.</li>
+          </ul>
+
+          <h3>Best practice for partners</h3>
+          <ul class="check-list">
+            <li>Submit reports weekly or monthly, not for every micro-action.</li>
+            <li>Include clear evidence or context so review is fast.</li>
+            <li>Keep your handle and payout email consistent.</li>
+          </ul>
+
+          <h3>Recommended subject line</h3>
+          <p class="small">
+            When you email a report payload, use a subject like:<br />
+            <code>[FD PARTNER] Enrollment report — &lt;your handle&gt;</code>
+          </p>
+
+          <p class="muted small">
+            This dashboard will later plug into an automated backend or referral platform.
+            Your discipline now makes that upgrade painless.
+          </p>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="fd-footer">
+      <p>Flame Division Academy · Partner Ledger v0.</p>
+      <p class="muted small">You report. We verify. The system stays clean.</p>
+    </footer>
+  </div>
+
+  <script src="dashboard.js"></script>
+
+  <!-- Same gate logic as other protected pages -->
+  <script>
+    (function () {
+      const ACCESS_TOKEN = "FLAME_FDA_V1"; // must match gate.html
+      const STORAGE_KEY = "flame_fda_access";
+
+      let current;
+      try {
+        current = sessionStorage.getItem(STORAGE_KEY);
+      } catch (err) {
+        current = null;
+      }
+
+      if (current !== ACCESS_TOKEN) {
+        var pathParts = window.location.pathname.split("/");
+        var fileName = pathParts[pathParts.length - 1] || "partner-dashboard.html";
+
+        var query = window.location.search || "";
+        var target = encodeURIComponent(fileName + query);
+
+        window.location.href = "gate.html?target=" + target;
+      }
+    })();
+  </script>
+</body>
+</html>
