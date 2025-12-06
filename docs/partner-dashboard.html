@@ -233,6 +233,22 @@
   </p>
 
   <div id="ledger-search-results" class="ledger-results"></div>
+
+  <hr class="divider" />
+
+  <h3 class="hud-title">HUD controls</h3>
+  <p class="tiny muted">
+    Export or import your local ledger as JSON. Nothing touches a server — this is for backups and device moves only.
+  </p>
+
+  <div class="search-row">
+    <button id="ledger-export-btn" class="ghost-btn small">⬇️ Export JSON</button>
+    <button id="ledger-import-btn" class="ghost-btn small">⬆️ Import JSON</button>
+    <input id="ledger-import-file" type="file" accept="application/json" style="display:none" />
+  </div>
+
+  <h3 class="hud-title">Ledger intelligence</h3>
+  <div id="ledger-intel" class="hud-intel"></div>
 </aside>
       </section>
     </main>
